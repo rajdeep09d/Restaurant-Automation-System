@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DineTech Automation Pro - Integrated Restaurant Platform</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 font-sans antialiased text-gray-800 pb-12">
+
+    <!-- Top Navigation Bar -->
+    <header class="bg-indigo-900 text-white shadow-md sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <i class="fa-solid fa-utensils text-2xl text-amber-400"></i>
+                <div>
+                    <h1 class="text-xl font-bold tracking-wide leading-tight">DineTech Pro</h1>
+                    <p class="text-[10px] text-indigo-300">Automated Restaurant Management System</p>
+                </div>
+            </div>
+            
+            <!-- Role Selector -->
+            <div class="flex items-center space-x-2 bg-indigo-800 p-1.5 rounded-lg border border-indigo-700">
+                <label for="roleSelect" class="text-xs font-semibold text-gray-300 ml-2">Active View Role:</label>
+                <select id="roleSelect" onchange="switchRole(this.value)" class="bg-indigo-900 text-white text-sm font-medium rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400 cursor-pointer">
+                    <option value="owner">Restaurant Owner</option>
+                    <option value="guest">Guest User / Customer</option>
+                    <option value="chef">Kitchen Chef (KDS)</option>
+                    <option value="supplier">Food Supplier</option>
+                </select>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto p-4 md:p-6">
+
+        <!-- ================= 1. RESTAURANT OWNER DASHBOARD ================= -->
+        <section id="owner-dashboard" class="role-dashboard">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800">Owner Analytics & Dashboard</h2>
+                    <p class="text-gray-600 text-sm">Real-time business performance, table layouts, and inventory control</p>
+                </div>
+                <div class="flex space-x-2">
+                    <button onclick="toggleAddItemModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-4 py-2 rounded-lg font-medium shadow-sm transition flex items-center">
+                        <i class="fa-solid fa-plus mr-1.5"></i> Add Menu Item
+                    </button>
+                    <button onclick="reorderAllLowStock()" class="bg-rose-600 hover:bg-rose-700 text-white text-sm px-4 py-2 rounded-lg font-medium shadow-sm transition flex items-center">
+                        <i class="fa-solid fa-truck-ramp-box mr-1.5"></i> Auto-Restock Low Inventory
+                    </button>
+                </div>
+            </div>
+
+            <!-- KPI Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                    <span class="text-gray-400 text-xs font-semibold uppercase">Gross Revenue</span>
+                    <h3 id="kpi-revenue" class="text-2xl font-bold text-gray-800 mt-1">$2,845.50</h3>
+                    <span class="text-emerald-500 text-xs font-semibold"><i class="fa-solid fa-arrow-up"></i> +14.2% vs yesterday</span>
+                </div>
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                    <span class="text-gray-400 text-xs font-semibold uppercase">Estimated Net Profit</span>
+                    <h3 id="kpi-profit" class="text-2xl font-bold text-emerald-600 mt-1">$1,138.20</h3>
+                    <span class="text-gray-400 text-xs font-semibold">Food Cost Est: ~32%</span>
+                </div>
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                    <span class="text-gray-400 text-xs font-semibold uppercase">Low Stock Alerts</span>
+                    <h3 id="kpi-stock-alert" class="text-2xl font-bold text-rose-600 mt-1">2 Items</h3>
+                    <span id="kpi-stock-sub" class="text-rose-500 text-xs font-semibold">Action needed</span>
+                </div>
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                    <span class="text-gray-400 text-xs font-semibold uppercase">Customer Rating</span>
+                    <h3 class="text-2xl font-bold text-amber-500 mt-1">4.9 / 5.0</h3>
+                    <span class="text-gray-400 text-xs font-semibold">142 Reviews today</span>
+                </div>
+            </div>
+
+            <!-- Floor Plan & Table Management -->
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 mb-8">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-gray-800 flex items-center">
+                        <i class="fa-solid fa-chair text-indigo-600 mr-2"></i> Real-time Table Occupancy & Seating
+                    </h3>
+                    <span class="text-xs text-gray-500">Updates live when customers order</span>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4" id="table-map-container">
+                    <div id="table-card-Table 01" class="border p-3 rounded-lg bg-amber-50 border-amber-300 text-center relative">
+                        <span class="text-xs font-bold block text-gray-700">Table 01</span>
+                        <span id="table-status-Table 01" class="text-[11px] font-semibold text-amber-700 block my-1">Occupied (4 Guests)</span>
+                        <button onclick="vacateTable('Table 01')" class="text-[10px] bg-white hover:bg-gray-100 text-gray-700 border border-gray-300 px-2 py-0.5 rounded shadow-xs">Reset Table</button>
+                    </div>
+                    <div id="table-card-Table 02" class="border p-3 rounded-lg bg-emerald-50 border-emerald-300 text-center relative">
+                        <span class="text-xs font-bold block text-gray-700">Table 02</span>
+                        <span id="table-status-Table 02" class="text-[11px] font-semibold text-emerald-700 block my-1">Available</span>
+                        <button onclick="vacateTable('Table 02')" class="text-[10px] bg-white hover:bg-gray-100 text-gray-700 border border-gray-300 px-2 py-0.5 rounded shadow-xs">Reset Table</button>
+                    </div>
+                    <div id="table-card-Table 03" class="border p-3 rounded-lg bg-indigo-50 border-indigo-300 text-center relative">
+                        <span class="text-xs font-bold block text-gray-700">Table 03</span>
+                        <span id="table-status-Table 03" class="text-[11px] font-semibold text-indigo-700 block my-1">Reserved</span>
+                        <button onclick="vacateTable('Table 03')" class="text-[10px] bg-white hover:bg-gray-100 text-gray-700 border border-gray-300 px-2 py-0.5 rounded shadow-xs">Reset Table</button>
+                    </div>
+                    <div id="table-card-Table 04" class="border p-3 rounded-lg bg-amber-50 border-amber-300 text-center relative">
+                        <span class="text-xs font-bold block text-gray-700">Table 04</span>
+                        <span id="table-status-Table 04" class="text-[11px] font-semibold text-amber-700 block my-1">Occupied (2 Guests)</span>
+                        <button onclick="vacateTable('Table 04')" class="text-[10px] bg-white hover:bg-gray-100 text-gray-700 border border-gray-300 px-2 py-0.5 rounded shadow-xs">Reset Table</button>
+                    </div>
+                    <div id="table-card-Table 05" class="border p-3 rounded-lg bg-emerald-50 border-emerald-300 text-center relative">
+                        <span class="text-xs font-bold block text-gray-700">Table 05</span>
+                        <span id="table-status-Table 05" class="text-[11px] font-semibold text-emerald-700 block my-1">Available</span>
+                        <button onclick="vacateTable('Table 05')" class="text-[10px] bg-white hover:bg-gray-100 text-gray-700 border border-gray-300 px-2 py-0.5 rounded shadow-xs">Reset Table</button>
+                    </div>
+                    <div id="table-card-Table 06" class="border p-3 rounded-lg bg-emerald-50 border-emerald-300 text-center relative">
+                        <span class="text-xs font-bold block text-gray-700">Table 06</span>
+                        <span id="table-status-Table 06" class="text-[11px] font-semibold text-emerald-700 block my-1">Available</span>
+                        <button onclick="vacateTable('Table 06')" class="text-[10px] bg-white hover:bg-gray-100 text-gray-700 border border-gray-300 px-2 py-0.5 rounded shadow-xs">Reset Table</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Management Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Inventory Overview -->
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-gray-800">Raw Ingredient Inventory</h3>
+                        <span class="text-xs text-indigo-600 font-medium">Auto-deducts on customer order</span>
+                    </div>
+                    <div class="space-y-4" id="inventory-list">
+                        <!-- Item 1 -->
+                        <div id="inv-item-1">
+                            <div class="flex justify-between text-xs font-medium mb-1">
+                                <span>Cheese Mozzarella</span>
+                                <span id="inv-qty-1" class="text-rose-600 font-bold">15% Left</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2 mb-2">
+                                <div id="inv-bar-1" class="bg-rose-500 h-2 rounded-full transition-all duration-500" style="width: 15%"></div>
+                            </div>
+                            <button onclick="sendSupplyRequest('Cheese Mozzarella', '20 Kg', 1)" class="text-[11px] bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium px-2.5 py-1 rounded">
+                                Send Order Request (+50%)
+                            </button>
+                        </div>
+                        
+                        <!-- Item 2 -->
+                        <div id="inv-item-2">
+                            <div class="flex justify-between text-xs font-medium mb-1">
+                                <span>Fresh Tomatoes</span>
+                                <span id="inv-qty-2" class="text-amber-600 font-bold">35% Left</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2 mb-2">
+                                <div id="inv-bar-2" class="bg-amber-500 h-2 rounded-full transition-all duration-500" style="width: 35%"></div>
+                            </div>
+                            <button onclick="sendSupplyRequest('Fresh Tomatoes', '30 Kg', 2)" class="text-[11px] bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium px-2.5 py-1 rounded">
+                                Send Order Request (+50%)
+                            </button>
+                        </div>
+
+                        <!-- Item 3: Replaced Beef with Fresh Paneer & Tofu -->
+                        <div id="inv-item-3">
+                            <div class="flex justify-between text-xs font-medium mb-1">
+                                <span>Fresh Paneer & Tofu Stock</span>
+                                <span id="inv-qty-3" class="text-emerald-600 font-bold">75% Left</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2 mb-2">
+                                <div id="inv-bar-3" class="bg-emerald-500 h-2 rounded-full transition-all duration-500" style="width: 75%"></div>
+                            </div>
+                            <button onclick="sendSupplyRequest('Fresh Paneer & Tofu Stock', '40 Kg', 3)" class="text-[11px] bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium px-2.5 py-1 rounded">
+                                Send Order Request (+50%)
+                            </button>
+                        </div>
+
+                        <!-- Item 4 -->
+                        <div id="inv-item-4">
+                            <div class="flex justify-between text-xs font-medium mb-1">
+                                <span>French Fries Stock</span>
+                                <span id="inv-qty-4" class="text-emerald-600 font-bold">60% Left</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2 mb-2">
+                                <div id="inv-bar-4" class="bg-emerald-500 h-2 rounded-full transition-all duration-500" style="width: 60%"></div>
+                            </div>
+                            <button onclick="sendSupplyRequest('French Fries Stock', '25 Kg', 4)" class="text-[11px] bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium px-2.5 py-1 rounded">
+                                Send Order Request (+50%)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity Logs -->
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-gray-800">Live System Activity Log</h3>
+                            <button onclick="clearActivityLogs()" class="text-gray-400 hover:text-gray-600 text-xs">Clear Logs</button>
+                        </div>
+                        <ul id="activity-logs" class="space-y-3 text-xs text-gray-600 max-h-64 overflow-y-auto pr-1">
+                            <li class="flex items-center space-x-2">
+                                <i class="fa-solid fa-circle-check text-emerald-500"></i>
+                                <span>System initialized & operational across all modules.</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ================= 2. GUEST USER DASHBOARD ================= -->
+        <section id="guest-dashboard" class="role-dashboard hidden">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800">Scan & Order (Self-Service POS)</h2>
+                    <p class="text-gray-600 text-sm">Select your table, add delicious items to cart, and send directly to the kitchen!</p>
+                </div>
+                
+                <div class="flex items-center space-x-3 w-full sm:w-auto justify-between">
+                    <div class="flex items-center space-x-2 bg-white px-3 py-1.5 rounded-lg border border-gray-200 shadow-xs">
+                        <i class="fa-solid fa-chair text-indigo-600 text-sm"></i>
+                        <span class="text-xs font-semibold text-gray-600">Your Table:</span>
+                        <select id="guest-table-num" class="text-sm font-bold text-indigo-900 bg-transparent focus:outline-none cursor-pointer">
+                            <option value="Table 01">Table 01</option>
+                            <option value="Table 02">Table 02</option>
+                            <option value="Table 03">Table 03</option>
+                            <option value="Table 04" selected>Table 04</option>
+                            <option value="Table 05">Table 05</option>
+                            <option value="Table 06">Table 06</option>
+                        </select>
+                    </div>
+
+                    <button onclick="toggleCartModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium shadow-sm transition flex items-center">
+                        <i class="fa-solid fa-cart-shopping mr-2"></i> View Cart (<span id="cart-count">0</span>)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Category Filter Tabs -->
+            <div class="flex space-x-2 mb-6 overflow-x-auto pb-2">
+                <button onclick="filterMenu('all')" class="menu-tab-btn active bg-indigo-600 text-white text-xs font-semibold px-4 py-2 rounded-full transition shadow-xs">All Items</button>
+                <button onclick="filterMenu('burger')" class="menu-tab-btn bg-white hover:bg-gray-100 text-gray-700 text-xs font-semibold px-4 py-2 rounded-full transition border border-gray-200">Burgers & Mains</button>
+                <button onclick="filterMenu('pizza')" class="menu-tab-btn bg-white hover:bg-gray-100 text-gray-700 text-xs font-semibold px-4 py-2 rounded-full transition border border-gray-200">Pizzas</button>
+                <button onclick="filterMenu('sides')" class="menu-tab-btn bg-white hover:bg-gray-100 text-gray-700 text-xs font-semibold px-4 py-2 rounded-full transition border border-gray-200">Sides & Drinks</button>
+            </div>
+
+            <!-- Menu Grid -->
+            <div id="guest-menu-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Replaced Beef Burger with Grilled Paneer Burger -->
+                <div class="menu-card burger bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition">
+                    <img src="https://images.unsplash.com/photo-1550547660-d9450f859349?w=500" class="w-full h-40 object-cover" alt="Grilled Paneer Burger">
+                    <div class="p-4">
+                        <div class="flex justify-between items-start">
+                            <h3 class="font-bold text-lg">Grilled Paneer Burger</h3>
+                            <span class="text-indigo-600 font-bold">$11.99</span>
+                        </div>
+                        <p class="text-gray-500 text-sm mt-1">Marinated grilled cottage cheese patty with mint mayo and crisp lettuce.</p>
+                        <button onclick="addToCart('Grilled Paneer Burger', 11.99)" class="w-full mt-4 bg-emerald-500 hover:bg-emerald-600 text-white py-2 rounded-lg font-medium transition flex items-center justify-center">
+                            <i class="fa-solid fa-plus mr-2"></i> Add to Order
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Margherita Pizza -->
+                <div class="menu-card pizza bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition">
+                    <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?w=500" class="w-full h-40 object-cover" alt="Pizza">
+                    <div class="p-4">
+                        <div class="flex justify-between items-start">
+                            <h3 class="font-bold text-lg">Margherita Pizza</h3>
+                            <span class="text-indigo-600 font-bold">$14.50</span>
+                        </div>
+                        <p class="text-gray-500 text-sm mt-1">Fresh mozzarella, organic tomatoes, basil, and olive oil drizzle.</p>
+                        <button onclick="addToCart('Margherita Pizza', 14.50)" class="w-full mt-4 bg-emerald-500 hover:bg-emerald-600 text-white py-2 rounded-lg font-medium transition flex items-center justify-center">
+                            <i class="fa-solid fa-plus mr-2"></i> Add to Order
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Fries -->
+                <div class="menu-card sides bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition">
+                    <img src="https://images.unsplash.com/photo-1576107232684-1279f390859f?w=500" class="w-full h-40 object-cover" alt="Fries">
+                    <div class="p-4">
+                        <div class="flex justify-between items-start">
+                            <h3 class="font-bold text-lg">Crispy Golden Fries</h3>
+                            <span class="text-indigo-600 font-bold">$4.99</span>
+                        </div>
+                        <p class="text-gray-500 text-sm mt-1">Hand-cut golden fries seasoned with sea salt and garlic powder.</p>
+                        <button onclick="addToCart('Crispy Golden Fries', 4.99)" class="w-full mt-4 bg-emerald-500 hover:bg-emerald-600 text-white py-2 rounded-lg font-medium transition flex items-center justify-center">
+                            <i class="fa-solid fa-plus mr-2"></i> Add to Order
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Replaced Mushroom Beef Burger with Truffle Mushroom Risotto -->
+                <div class="menu-card burger bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition">
+                    <img src="https://images.unsplash.com/photo-1633964913295-ceb43826e7c9?w=500" class="w-full h-40 object-cover" alt="Truffle Mushroom Risotto">
+                    <div class="p-4">
+                        <div class="flex justify-between items-start">
+                            <h3 class="font-bold text-lg">Truffle Mushroom Risotto</h3>
+                            <span class="text-indigo-600 font-bold">$15.75</span>
+                        </div>
+                        <p class="text-gray-500 text-sm mt-1">Creamy Arborio rice with wild mushrooms, truffle oil, and parmesan.</p>
+                        <button onclick="addToCart('Truffle Mushroom Risotto', 15.75)" class="w-full mt-4 bg-emerald-500 hover:bg-emerald-600 text-white py-2 rounded-lg font-medium transition flex items-center justify-center">
+                            <i class="fa-solid fa-plus mr-2"></i> Add to Order
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Loaded Nachos -->
+                <div class="menu-card sides bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition">
+                    <img src="https://images.unsplash.com/photo-1513456852971-30c0b8199d4d?w=500" class="w-full h-40 object-cover" alt="Loaded Nachos">
+                    <div class="p-4">
+                        <div class="flex justify-between items-start">
+                            <h3 class="font-bold text-lg">Loaded Cheese Nachos</h3>
+                            <span class="text-indigo-600 font-bold">$8.75</span>
+                        </div>
+                        <p class="text-gray-500 text-sm mt-1">Tortilla chips melted with cheese, jalapenos, and guacamole.</p>
+                        <button onclick="addToCart('Loaded Cheese Nachos', 8.75)" class="w-full mt-4 bg-emerald-500 hover:bg-emerald-600 text-white py-2 rounded-lg font-medium transition flex items-center justify-center">
+                            <i class="fa-solid fa-plus mr-2"></i> Add to Order
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Iced Tea -->
+                <div class="menu-card sides bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition">
+                    <img src="https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=500" class="w-full h-40 object-cover" alt="Iced Tea">
+                    <div class="p-4">
+                        <div class="flex justify-between items-start">
+                            <h3 class="font-bold text-lg">Fresh Iced Lemon Tea</h3>
+                            <span class="text-indigo-600 font-bold">$3.50</span>
+                        </div>
+                        <p class="text-gray-500 text-sm mt-1">House-brewed black tea with fresh lemon juice and mint.</p>
+                        <button onclick="addToCart('Fresh Iced Lemon Tea', 3.50)" class="w-full mt-4 bg-emerald-500 hover:bg-emerald-600 text-white py-2 rounded-lg font-medium transition flex items-center justify-center">
+                            <i class="fa-solid fa-plus mr-2"></i> Add to Order
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ================= 3. CHEF DASHBOARD (KDS VIEW) ================= -->
+        <section id="chef-dashboard" class="role-dashboard hidden">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800">Kitchen Display System (KDS)</h2>
+                    <p class="text-gray-600 text-sm">Real-time live kitchen preparation queue and order management</p>
+                </div>
+                
+                <!-- Chef Queue Filter -->
+                <div class="flex space-x-2">
+                    <button onclick="filterChefOrders('all')" class="bg-gray-800 text-white text-xs px-3 py-1.5 rounded-md">All Orders</button>
+                    <button onclick="filterChefOrders('Pending')" class="bg-amber-500 text-white text-xs px-3 py-1.5 rounded-md">Pending</button>
+                    <button onclick="filterChefOrders('Preparing')" class="bg-blue-500 text-white text-xs px-3 py-1.5 rounded-md">Preparing</button>
+                    <button onclick="filterChefOrders('Ready')" class="bg-emerald-500 text-white text-xs px-3 py-1.5 rounded-md">Ready</button>
+                </div>
+            </div>
+
+            <!-- Expanded Orders Board Grid (Added 2 extra active orders) -->
+            <div id="chef-orders-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Order 100 -->
+                <div id="order-card-100" class="chef-card-item bg-white rounded-xl shadow-md border-l-4 border-emerald-500 p-4 opacity-75" data-status="Ready">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-base font-bold">Order #100</span>
+                        <span id="badge-100" class="bg-emerald-100 text-emerald-800 text-xs px-2 py-0.5 rounded-full font-semibold">Ready</span>
+                    </div>
+                    <p class="text-[11px] text-gray-500 mb-3"><i class="fa-regular fa-clock mr-1"></i> Table 01 • 15 mins ago</p>
+                    
+                    <ul class="divide-y divide-gray-100 mb-4 text-xs">
+                        <li class="py-1.5 flex justify-between">
+                            <span>1x Margherita Pizza</span>
+                            <span class="font-medium">$14.50</span>
+                        </li>
+                        <li class="py-1.5 flex justify-between">
+                            <span>1x Fresh Iced Lemon Tea</span>
+                            <span class="font-medium">$3.50</span>
+                        </li>
+                    </ul>
+
+                    <button id="btn-100" disabled class="w-full bg-gray-300 text-gray-600 py-1.5 rounded-lg font-medium text-xs cursor-not-allowed">
+                        Completed
+                    </button>
+                </div>
+
+                <!-- Order 101 -->
+                <div id="order-card-101" class="chef-card-item bg-white rounded-xl shadow-md border-l-4 border-amber-500 p-4" data-status="Pending">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-base font-bold">Order #101</span>
+                        <span id="badge-101" class="bg-amber-100 text-amber-800 text-xs px-2 py-0.5 rounded-full font-semibold">Pending</span>
+                    </div>
+                    <p class="text-[11px] text-gray-500 mb-3"><i class="fa-regular fa-clock mr-1"></i> Table 04 • 4 mins ago</p>
+                    
+                    <ul class="divide-y divide-gray-100 mb-4 text-xs">
+                        <li class="py-1.5 flex justify-between">
+                            <span>1x Grilled Paneer Burger</span>
+                            <span class="font-medium">$11.99</span>
+                        </li>
+                        <li class="py-1.5 flex justify-between">
+                            <span>1x Crispy Golden Fries</span>
+                            <span class="font-medium">$4.99</span>
+                        </li>
+                    </ul>
+
+                    <button id="btn-101" onclick="updateOrderStatus('101', 'Preparing')" class="w-full bg-amber-500 hover:bg-amber-600 text-white py-1.5 rounded-lg font-medium text-xs transition">
+                        Start Preparing
+                    </button>
+                </div>
+
+                <!-- Order 102 (ADDITIONAL CHEF ORDER) -->
+                <div id="order-card-102" class="chef-card-item bg-white rounded-xl shadow-md border-l-4 border-blue-500 p-4" data-status="Preparing">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-base font-bold">Order #102</span>
+                        <span id="badge-102" class="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded-full font-semibold">Preparing</span>
+                    </div>
+                    <p class="text-[11px] text-gray-500 mb-3"><i class="fa-regular fa-clock mr-1"></i> Table 02 • 2 mins ago</p>
+                    
+                    <ul class="divide-y divide-gray-100 mb-4 text-xs">
+                        <li class="py-1.5 flex justify-between">
+                            <span>1x Truffle Mushroom Risotto</span>
+                            <span class="font-medium">$15.75</span>
+                        </li>
+                        <li class="py-1.5 flex justify-between">
+                            <span>1x Fresh Iced Lemon Tea</span>
+                            <span class="font-medium">$3.50</span>
+                        </li>
+                    </ul>
+
+                    <button id="btn-102" onclick="updateOrderStatus('102', 'Ready')" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-1.5 rounded-lg font-medium text-xs transition">
+                        Mark as Ready
+                    </button>
+                </div>
+
+                <!-- Order 103 (ADDITIONAL CHEF ORDER) -->
+                <div id="order-card-103" class="chef-card-item bg-white rounded-xl shadow-md border-l-4 border-amber-500 p-4" data-status="Pending">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-base font-bold">Order #103</span>
+                        <span id="badge-103" class="bg-amber-100 text-amber-800 text-xs px-2 py-0.5 rounded-full font-semibold">Pending</span>
+                    </div>
+                    <p class="text-[11px] text-gray-500 mb-3"><i class="fa-regular fa-clock mr-1"></i> Table 05 • Just Now</p>
+                    
+                    <ul class="divide-y divide-gray-100 mb-4 text-xs">
+                        <li class="py-1.5 flex justify-between">
+                            <span>1x Loaded Cheese Nachos</span>
+                            <span class="font-medium">$8.75</span>
+                        </li>
+                        <li class="py-1.5 flex justify-between">
+                            <span>1x Margherita Pizza</span>
+                            <span class="font-medium">$14.50</span>
+                        </li>
+                    </ul>
+
+                    <button id="btn-103" onclick="updateOrderStatus('103', 'Preparing')" class="w-full bg-amber-500 hover:bg-amber-600 text-white py-1.5 rounded-lg font-medium text-xs transition">
+                        Start Preparing
+                    </button>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ================= 4. FOOD SUPPLIER DASHBOARD ================= -->
+        <section id="supplier-dashboard" class="role-dashboard hidden">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800">Food Supplier Supply Portal</h2>
+                    <p class="text-gray-600 text-sm">Manage incoming restock purchase orders sent by the Restaurant Owner</p>
+                </div>
+                
+                <div class="flex space-x-2">
+                    <button onclick="filterSupplierOrders('all')" class="bg-gray-800 text-white text-xs px-3 py-1.5 rounded-md">All Supply Orders</button>
+                    <button onclick="filterSupplierOrders('Requested')" class="bg-amber-500 text-white text-xs px-3 py-1.5 rounded-md">Pending Requests</button>
+                    <button onclick="filterSupplierOrders('Dispatched')" class="bg-emerald-500 text-white text-xs px-3 py-1.5 rounded-md">Dispatched</button>
+                </div>
+            </div>
+
+            <!-- Supply Orders Table (Expanded with more items) -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-gray-50 text-gray-600 text-xs uppercase tracking-wider">
+                        <tr>
+                            <th class="p-4">PO Code</th>
+                            <th class="p-4">Item Requested</th>
+                            <th class="p-4">Quantity</th>
+                            <th class="p-4">Status</th>
+                            <th class="p-4 text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="supplier-requests-body" class="divide-y divide-gray-100 text-sm">
+                        <!-- Request 1 -->
+                        <tr id="sup-row-891" class="sup-row-item" data-status="Requested">
+                            <td class="p-4 font-semibold">#PO-891</td>
+                            <td class="p-4">Organic Fresh Milk</td>
+                            <td class="p-4">50 L</td>
+                            <td class="p-4"><span id="sup-status-891" class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs font-semibold">Requested</span></td>
+                            <td class="p-4 text-right">
+                                <button id="sup-btn-891" onclick="dispatchSupply('891', 'Organic Fresh Milk')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-3 py-1.5 rounded font-medium">Accept & Dispatch</button>
+                            </td>
+                        </tr>
+                        <!-- Request 2 (ADDITIONAL SUPPLIER ORDER) -->
+                        <tr id="sup-row-892" class="sup-row-item" data-status="Requested">
+                            <td class="p-4 font-semibold">#PO-892</td>
+                            <td class="p-4">Fresh Cottage Cheese (Paneer)</td>
+                            <td class="p-4">35 Kg</td>
+                            <td class="p-4"><span id="sup-status-892" class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs font-semibold">Requested</span></td>
+                            <td class="p-4 text-right">
+                                <button id="sup-btn-892" onclick="dispatchSupply('892', 'Fresh Cottage Cheese (Paneer)', 3)" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-3 py-1.5 rounded font-medium">Accept & Dispatch</button>
+                            </td>
+                        </tr>
+                        <!-- Request 3 (ADDITIONAL SUPPLIER ORDER) -->
+                        <tr id="sup-row-893" class="sup-row-item" data-status="Dispatched">
+                            <td class="p-4 font-semibold">#PO-893</td>
+                            <td class="p-4">Garlic & Herb Seasoning Packs</td>
+                            <td class="p-4">150 Units</td>
+                            <td class="p-4"><span id="sup-status-893" class="bg-emerald-100 text-emerald-800 px-2 py-1 rounded text-xs font-semibold">Dispatched</span></td>
+                            <td class="p-4 text-right">
+                                <button id="sup-btn-893" disabled class="bg-gray-300 text-gray-600 text-xs px-3 py-1.5 rounded font-medium cursor-not-allowed">Dispatched</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Modal: Guest Cart Modal -->
+    <div id="guest-cart-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl shadow-lg max-w-md w-full p-6">
+            <div class="flex justify-between items-center mb-4 border-b pb-3">
+                <h3 class="font-bold text-lg text-gray-800">Your Selected Order</h3>
+                <button onclick="toggleCartModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="cart-items-list" class="divide-y divide-gray-100 max-h-60 overflow-y-auto mb-4">
+                <p class="text-sm text-gray-500 italic py-2">Your cart is currently empty.</p>
+            </div>
+            <div class="flex justify-between font-bold text-lg border-t pt-3 mb-4">
+                <span>Total Amount:</span>
+                <span id="cart-total-price">$0.00</span>
+            </div>
+            <div class="flex justify-end space-x-2">
+                <button type="button" onclick="toggleCartModal()" class="px-4 py-2 border text-sm rounded-lg text-gray-600 hover:bg-gray-50">Continue Browsing</button>
+                <button type="button" onclick="submitGuestOrder()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg">Confirm & Send Order</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Owner Add New Menu Item -->
+    <div id="add-item-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl shadow-lg max-w-md w-full p-6">
+            <div class="flex justify-between items-center mb-4 border-b pb-3">
+                <h3 class="font-bold text-lg text-gray-800">Add New Menu Item</h3>
+                <button onclick="toggleAddItemModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="add-item-form" onsubmit="handleAddItem(event)">
+                <div class="mb-3">
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Item Name</label>
+                    <input type="text" id="item-name" placeholder="e.g., Crispy Veg Tacos" required class="w-full text-sm border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div class="mb-3">
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Price ($)</label>
+                    <input type="number" step="0.01" id="item-price" placeholder="10.99" required class="w-full text-sm border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Description</label>
+                    <textarea id="item-desc" rows="2" placeholder="Item details and ingredients..." required class="w-full text-sm border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                </div>
+                <div class="flex justify-end space-x-2 border-t pt-3">
+                    <button type="button" onclick="toggleAddItemModal()" class="px-4 py-2 border text-sm rounded-lg text-gray-600 hover:bg-gray-50">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg">Save & Add Item</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- UI & BUSINESS LOGIC JAVASCRIPT CODE -->
+    <script>
+        /* ==========================================================================
+           GLOBAL APPLICATION STATE
+           ========================================================================== */
+        let cart = [];
+        let orderCounter = 104;
+        let poCounter = 894;
+
+        /* ==========================================================================
+           1. ROLE SWITCHING CONTROLLER
+           ========================================================================== */
+        function switchRole(roleName) {
+            const dashboards = document.querySelectorAll('.role-dashboard');
+            dashboards.forEach(dashboard => dashboard.classList.add('hidden'));
+
+            const activeDashboard = document.getElementById(`${roleName}-dashboard`);
+            if (activeDashboard) {
+                activeDashboard.classList.remove('hidden');
+            }
+        }
+
+        /* ==========================================================================
+           2. OWNER DASHBOARD & FINANCIAL CALCULATOR
+           ========================================================================== */
+        function calculateFinancials() {
+            const completedOrdersCount = document.querySelectorAll('#chef-orders-container .border-emerald-500').length;
+            const pendingOrdersCount = document.querySelectorAll('#chef-orders-container .border-amber-500, #chef-orders-container .border-blue-500').length;
+            
+            const baseGross = 2845.50;
+            const additionalSales = (completedOrdersCount * 22.50) + (pendingOrdersCount * 16.00);
+            const updatedGross = baseGross + additionalSales;
+            
+            const estimatedProfit = updatedGross * 0.40;
+
+            const kpiRevenue = document.getElementById('kpi-revenue');
+            const kpiProfit = document.getElementById('kpi-profit');
+
+            if (kpiRevenue) kpiRevenue.innerText = `$${updatedGross.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            if (kpiProfit) kpiProfit.innerText = `$${estimatedProfit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        }
+
+        function logActivity(text, iconClass = 'fa-circle-check text-emerald-500') {
+            const logContainer = document.getElementById('activity-logs');
+            const li = document.createElement('li');
+            li.className = 'flex items-center space-x-2';
+            li.innerHTML = `<i class="fa-solid ${iconClass}"></i><span>${text}</span>`;
+            logContainer.prepend(li);
+        }
+
+        function clearActivityLogs() {
+            document.getElementById('activity-logs').innerHTML = '<li class="text-gray-400 italic">No activity logs recorded.</li>';
+        }
+
+        function vacateTable(tableId) {
+            const tableCard = document.getElementById(`table-card-${tableId}`);
+            const tableStatus = document.getElementById(`table-status-${tableId}`);
+
+            if (tableCard && tableStatus) {
+                tableCard.className = "border p-3 rounded-lg bg-emerald-50 border-emerald-300 text-center relative";
+                tableStatus.className = "text-[11px] font-semibold text-emerald-700 block my-1";
+                tableStatus.innerText = "Available";
+                logActivity(`<strong>${tableId}</strong> cleared and marked <strong>Available</strong>.`, 'fa-sparkles text-emerald-500');
+            }
+        }
+
+        function occupyTable(tableId, guests = 2) {
+            const tableCard = document.getElementById(`table-card-${tableId}`);
+            const tableStatus = document.getElementById(`table-status-${tableId}`);
+
+            if (tableCard && tableStatus) {
+                tableCard.className = "border p-3 rounded-lg bg-amber-50 border-amber-300 text-center relative";
+                tableStatus.className = "text-[11px] font-semibold text-amber-700 block my-1";
+                tableStatus.innerText = `Occupied (${guests} Guests)`;
+            }
+        }
+
+        /* ==========================================================================
+           3. GUEST CUSTOMER POS ENGINE
+           ========================================================================== */
+        function addToCart(name, price) {
+            cart.push({ name, price });
+            document.getElementById('cart-count').innerText = cart.length;
+            renderCart();
+            alert(`"${name}" added to order cart!`);
+        }
+
+        function toggleCartModal() {
+            document.getElementById('guest-cart-modal').classList.toggle('hidden');
+        }
+
+        function renderCart() {
+            const listContainer = document.getElementById('cart-items-list');
+            const totalPriceElement = document.getElementById('cart-total-price');
+            
+            if (cart.length === 0) {
+                listContainer.innerHTML = '<p class="text-sm text-gray-500 italic py-2">Your cart is currently empty.</p>';
+                totalPriceElement.innerText = '$0.00';
+                return;
+            }
+
+            let html = '';
+            let total = 0;
+            cart.forEach((item) => {
+                total += item.price;
+                html += `
+                    <div class="flex justify-between items-center py-2 text-sm">
+                        <span>${item.name}</span>
+                        <span class="font-semibold">$${item.price.toFixed(2)}</span>
+                    </div>
+                `;
+            });
+
+            listContainer.innerHTML = html;
+            totalPriceElement.innerText = `$${total.toFixed(2)}`;
+        }
+
+        function filterMenu(category) {
+            const cards = document.querySelectorAll('.menu-card');
+            cards.forEach(card => {
+                if (category === 'all' || card.classList.contains(category)) {
+                    card.classList.remove('hidden');
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+        }
+
+        function submitGuestOrder() {
+            if (cart.length === 0) {
+                alert('Your cart is empty!');
+                return;
+            }
+
+            const tableNum = document.getElementById('guest-table-num').value;
+            const currentOrderId = orderCounter++;
+            let itemsListHtml = '';
+            let totalOrderVal = 0;
+
+            deductInventoryForCart(cart);
+
+            cart.forEach(item => {
+                totalOrderVal += item.price;
+                itemsListHtml += `
+                    <li class="py-1.5 flex justify-between">
+                        <span>1x ${item.name}</span>
+                        <span class="font-medium">$${item.price.toFixed(2)}</span>
+                    </li>
+                `;
+            });
+
+            occupyTable(tableNum, 2);
+
+            const chefContainer = document.getElementById('chef-orders-container');
+            const newOrderCard = document.createElement('div');
+            newOrderCard.id = `order-card-${currentOrderId}`;
+            newOrderCard.className = 'chef-card-item bg-white rounded-xl shadow-md border-l-4 border-amber-500 p-4';
+            newOrderCard.setAttribute('data-status', 'Pending');
+            newOrderCard.innerHTML = `
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-base font-bold">Order #${currentOrderId}</span>
+                    <span id="badge-${currentOrderId}" class="bg-amber-100 text-amber-800 text-xs px-2 py-0.5 rounded-full font-semibold">Pending</span>
+                </div>
+                <p class="text-[11px] text-gray-500 mb-3"><i class="fa-regular fa-clock mr-1"></i> ${tableNum} • Just now</p>
+                <ul class="divide-y divide-gray-100 mb-4 text-xs">
+                    ${itemsListHtml}
+                </ul>
+                <button id="btn-${currentOrderId}" onclick="updateOrderStatus('${currentOrderId}', 'Preparing')" class="w-full bg-amber-500 hover:bg-amber-600 text-white py-1.5 rounded-lg font-medium text-xs transition">
+                    Start Preparing
+                </button>
+            `;
+            chefContainer.prepend(newOrderCard);
+
+            logActivity(`New Guest Order <strong>#${currentOrderId}</strong> from <strong>${tableNum}</strong> ($${totalOrderVal.toFixed(2)}).`, 'fa-bell text-amber-500');
+
+            cart = [];
+            document.getElementById('cart-count').innerText = 0;
+            renderCart();
+            toggleCartModal();
+            calculateFinancials();
+            alert(`Order #${currentOrderId} sent directly to the kitchen chef!`);
+        }
+
+        /* ==========================================================================
+           4. KITCHEN CHEF KDS CONTROLLER
+           ========================================================================== */
+        function updateOrderStatus(orderId, newStatus) {
+            const badge = document.getElementById(`badge-${orderId}`);
+            const btn = document.getElementById(`btn-${orderId}`);
+            const card = document.getElementById(`order-card-${orderId}`);
+
+            if (card) card.setAttribute('data-status', newStatus);
+
+            if (newStatus === 'Preparing') {
+                badge.className = "bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded-full font-semibold";
+                badge.innerText = "Preparing";
+                card.className = "chef-card-item bg-white rounded-xl shadow-md border-l-4 border-blue-500 p-4";
+                btn.innerText = "Mark as Ready";
+                btn.className = "w-full bg-emerald-500 hover:bg-emerald-600 text-white py-1.5 rounded-lg font-medium text-xs transition";
+                btn.setAttribute('onclick', `updateOrderStatus('${orderId}', 'Ready')`);
+                logActivity(`Chef started preparing Order <strong>#${orderId}</strong>.`, 'fa-fire text-amber-500');
+            } else if (newStatus === 'Ready') {
+                badge.className = "bg-emerald-100 text-emerald-800 text-xs px-2 py-0.5 rounded-full font-semibold";
+                badge.innerText = "Ready";
+                card.className = "chef-card-item bg-white rounded-xl shadow-md border-l-4 border-emerald-500 p-4 opacity-75";
+                btn.disabled = true;
+                btn.innerText = "Completed";
+                btn.className = "w-full bg-gray-300 text-gray-600 py-1.5 rounded-lg font-medium text-xs cursor-not-allowed";
+                logActivity(`Chef completed Order <strong>#${orderId}</strong>! Ready for serving.`, 'fa-circle-check text-emerald-500');
+                calculateFinancials();
+            }
+        }
+
+        function filterChefOrders(status) {
+            const orders = document.querySelectorAll('.chef-card-item');
+            orders.forEach(card => {
+                if (status === 'all' || card.getAttribute('data-status') === status) {
+                    card.classList.remove('hidden');
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+        }
+
+        /* ==========================================================================
+           5. INVENTORY & FOOD SUPPLIER PORTAL ENGINE
+           ========================================================================== */
+        function deductInventoryForCart(cartItems) {
+            cartItems.forEach(item => {
+                const name = item.name.toLowerCase();
+                if (name.includes('cheese') || name.includes('pizza')) {
+                    decreaseStock(1, 10);
+                }
+                if (name.includes('pizza') || name.includes('margherita')) {
+                    decreaseStock(2, 8);
+                }
+                if (name.includes('paneer') || name.includes('risotto')) {
+                    decreaseStock(3, 12);
+                }
+                if (name.includes('fries') || name.includes('nachos')) {
+                    decreaseStock(4, 15);
+                }
+            });
+        }
+
+        function decreaseStock(itemIdx, percentage) {
+            const qtyLabel = document.getElementById(`inv-qty-${itemIdx}`);
+            const progressBar = document.getElementById(`inv-bar-${itemIdx}`);
+            if (!qtyLabel || !progressBar) return;
+
+            let currentVal = parseInt(progressBar.style.width) || 50;
+            let newVal = Math.max(0, currentVal - percentage);
+
+            progressBar.style.width = `${newVal}%`;
+            qtyLabel.innerText = `${newVal}% Left`;
+
+            if (newVal <= 20) {
+                qtyLabel.className = "text-rose-600 font-bold";
+                progressBar.className = "bg-rose-500 h-2 rounded-full transition-all duration-500";
+            } else if (newVal <= 40) {
+                qtyLabel.className = "text-amber-600 font-bold";
+                progressBar.className = "bg-amber-500 h-2 rounded-full transition-all duration-500";
+            }
+        }
+
+        function sendSupplyRequest(itemName, qty, itemIndex) {
+            const currentPoId = poCounter++;
+            const supplierTableBody = document.getElementById('supplier-requests-body');
+
+            const tr = document.createElement('tr');
+            tr.id = `sup-row-${currentPoId}`;
+            tr.className = "sup-row-item";
+            tr.setAttribute('data-status', 'Requested');
+            tr.innerHTML = `
+                <td class="p-4 font-semibold">#PO-${currentPoId}</td>
+                <td class="p-4">${itemName}</td>
+                <td class="p-4">${qty}</td>
+                <td class="p-4"><span id="sup-status-${currentPoId}" class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs font-semibold">Requested</span></td>
+                <td class="p-4 text-right">
+                    <button id="sup-btn-${currentPoId}" onclick="dispatchSupply('${currentPoId}', '${itemName}', ${itemIndex})" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-3 py-1.5 rounded font-medium">Accept & Dispatch</button>
+                </td>
+            `;
+            supplierTableBody.prepend(tr);
+
+            logActivity(`Purchase request <strong>#PO-${currentPoId}</strong> sent for ${itemName}.`, 'fa-truck text-indigo-500');
+            alert(`Purchase Order #PO-${currentPoId} sent to Food Supplier!`);
+        }
+
+        function reorderAllLowStock() {
+            sendSupplyRequest('Cheese Mozzarella', '20 Kg', 1);
+            sendSupplyRequest('Fresh Tomatoes', '30 Kg', 2);
+        }
+
+        function dispatchSupply(poId, itemName, itemIndex) {
+            const statusBadge = document.getElementById(`sup-status-${poId}`);
+            const btn = document.getElementById(`sup-btn-${poId}`);
+            const row = document.getElementById(`sup-row-${poId}`);
+
+            if (row) row.setAttribute('data-status', 'Dispatched');
+
+            statusBadge.className = "bg-emerald-100 text-emerald-800 px-2 py-1 rounded text-xs font-semibold";
+            statusBadge.innerText = "Dispatched";
+
+            btn.disabled = true;
+            btn.className = "bg-gray-300 text-gray-600 text-xs px-3 py-1.5 rounded font-medium cursor-not-allowed";
+            btn.innerText = "Dispatched";
+
+            if (itemIndex) {
+                const qtyLabel = document.getElementById(`inv-qty-${itemIndex}`);
+                const progressBar = document.getElementById(`inv-bar-${itemIndex}`);
+                if (qtyLabel && progressBar) {
+                    qtyLabel.innerText = "85% Left";
+                    qtyLabel.className = "text-emerald-600 font-bold";
+                    progressBar.style.width = "85%";
+                    progressBar.className = "bg-emerald-500 h-2 rounded-full transition-all duration-500";
+                }
+            }
+
+            const alertKpi = document.getElementById('kpi-stock-alert');
+            const alertSub = document.getElementById('kpi-stock-sub');
+            if (alertKpi && alertSub) {
+                alertKpi.innerText = "0 Items";
+                alertKpi.className = "text-2xl font-bold text-emerald-600 mt-1";
+                alertSub.innerText = "All stock optimal";
+                alertSub.className = "text-emerald-500 text-xs font-semibold";
+            }
+
+            logActivity(`Supplier dispatched <strong>#PO-${poId}</strong> (${itemName}). Stock refilled!`, 'fa-box text-emerald-500');
+        }
+
+        function filterSupplierOrders(status) {
+            const rows = document.querySelectorAll('.sup-row-item');
+            rows.forEach(row => {
+                if (status === 'all' || row.getAttribute('data-status') === status) {
+                    row.classList.remove('hidden');
+                } else {
+                    row.classList.add('hidden');
+                }
+            });
+        }
+
+        /* ==========================================================================
+           6. OWNER ADD NEW ITEM HANDLER
+           ========================================================================== */
+        function toggleAddItemModal() {
+            document.getElementById('add-item-modal').classList.toggle('hidden');
+        }
+
+        function handleAddItem(event) {
+            event.preventDefault();
+            const name = document.getElementById('item-name').value;
+            const price = parseFloat(document.getElementById('item-price').value);
+            const desc = document.getElementById('item-desc').value;
+
+            const guestMenuGrid = document.getElementById('guest-menu-grid');
+            const newCard = document.createElement('div');
+            newCard.className = 'menu-card sides bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition';
+            newCard.innerHTML = `
+                <img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500" class="w-full h-40 object-cover" alt="${name}">
+                <div class="p-4">
+                    <div class="flex justify-between items-start">
+                        <h3 class="font-bold text-lg">${name}</h3>
+                        <span class="text-indigo-600 font-bold">$${price.toFixed(2)}</span>
+                    </div>
+                    <p class="text-gray-500 text-sm mt-1">${desc}</p>
+                    <button onclick="addToCart('${name}', ${price})" class="w-full mt-4 bg-emerald-500 hover:bg-emerald-600 text-white py-2 rounded-lg font-medium transition flex items-center justify-center">
+                        <i class="fa-solid fa-plus mr-2"></i> Add to Order
+                    </button>
+                </div>
+            `;
+            guestMenuGrid.appendChild(newCard);
+
+            logActivity(`Owner added new menu item: <strong>${name}</strong> ($${price.toFixed(2)}).`, 'fa-circle-plus text-indigo-500');
+
+            document.getElementById('add-item-form').reset();
+            toggleAddItemModal();
+            alert(`"${name}" successfully added to the Guest Customer Menu!`);
+        }
+    </script>
+</body>
+</html>
